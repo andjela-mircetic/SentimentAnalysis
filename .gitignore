@@ -14,6 +14,7 @@ output.calva-repl
 .nrepl-port
 .cloverage/
 .lsp/
+db.transit.json
 /tmp/
 *.log
 *.class

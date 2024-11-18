@@ -37,4 +37,13 @@
 (defn getRecentMessages [messages n]
   (take-last n messages))
 
+(defn analyzeSentimentByUser [messages username sentiment-analyzer]
+  (map #(sentiment-analyzer (:message %))
+       (filter #(= (:sentFrom %) username) messages)))
 
+(defn sentiment-analyzer [message]
+  (if (clojure.string/includes? message "Hi")
+    "Positive"
+    "Neutral"))
+  
+(analyzeSentimentByUser messages "Andjela" sentiment-analyzer)
