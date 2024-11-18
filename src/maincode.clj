@@ -8,7 +8,7 @@
     (assoc users username [])))
 
 (def users {})
-(def users (register-user users "Alice"))
-(def users (register-user users "Bob"))
+(def users (register-user users "Andjela"))
+(def users (register-user users "Katarina"))
 
 

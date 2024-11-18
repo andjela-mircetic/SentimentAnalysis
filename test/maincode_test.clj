@@ -3,17 +3,17 @@
             [maincode :refer :all]))
 
 (fact "registers a new user"
-      (register-user {} "Alice") => {"Alice" []})
+      (register-user {} "Andjela") => {"Andjela" []})
 
 (fact "registers multiple users"
       (-> {}
-          (register-user "Alice")
-          (register-user "Bob")) => {"Alice" [] "Bob" []})
+          (register-user "Andjela")
+          (register-user "Katarina")) => {"Andjela" [] "Katarina" []})
 
 (fact "does not allow duplicate usernames"
-      (register-user {"Alice" []} "Alice") => {:error "Username already exists"})
+      (register-user {"Andjela" []} "Andjela") => {:error "Username already exists"})
 
 (fact "ensures existing users are unchanged"
-      (register-user {"Alice" [] "Bob" []} "Charlie")
-      => {"Alice" [] "Bob" [] "Charlie" []})
+      (register-user {"Andjela" [] "Katarina" []} "Dusan")
+      => {"Andjela" [] "Katarina" [] "Dusan" []})
 

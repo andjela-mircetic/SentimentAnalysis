@@ -7,6 +7,3 @@
             [lein-midje "3.2.1"]]
   :main maincode)
 
-;{:deps {ring/ring-core {:mvn/version "1.9.5"}
-      ;  ring/ring-json {:mvn/version "0.5.0"}
-      ;  compojure {:mvn/version "1.6.2"}}}
