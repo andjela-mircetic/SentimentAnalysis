@@ -13,6 +13,7 @@ target/
 output.calva-repl
 .nrepl-port
 .cloverage/
+db.transit.json
 /tmp/
 *.log
 *.class
