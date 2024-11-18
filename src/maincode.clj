@@ -23,3 +23,18 @@
 
 (defn messagesReceivedBy [messages username]
   (filter #(= (:sentTo %) username) messages))
+
+(defn getMessagesBetween [messages user1 user2]
+  (filter #(or (and (= (:sentFrom %) user1) (= (:sentTo %) user2))
+               (and (= (:sentFrom %) user2) (= (:sentTo %) user1)))
+          messages))
+
+(defn sendMessage [users messages sentFrom sentTo time message]
+  (if (and (contains? users sentFrom) (contains? users sentTo))
+    (conj messages {:sentFrom sentFrom :sentTo sentTo :time time :message message})
+    {:error "Sender or recipient does not exist"}))
+
+(defn getRecentMessages [messages n]
+  (take-last n messages))
+
+
