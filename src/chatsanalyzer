@@ -2,39 +2,40 @@
   (:require [nrepl.server :as nrepl-server]
             [cider.nrepl :refer (cider-nrepl-handler)]
             [maincode :refer :all]
-            [db.core :as db]
-            [monger.collection :as mc]))
+            [db.core :as db]))
 
 ;This namespace is responsible for analyzing tactics and sentiment of messages
 
-; Simulated data
-(def user-tactics
-  {"Andjela" [{:chat-with "Katarina" :tactic "This user seems suspicient."}
-              {:chat-with "Dusan" :tactic "Very aggressive."}]
-   "Katarina" [{:chat-with "Andjela" :tactic "This user is passive"}]})
-
 (defn get-tactics-for-chat [user-tactics logged-in-user chat-with]
-  (filter #(= (:chat-with %) chat-with)
-          (get user-tactics logged-in-user [])))
+  (db/find-maps "tactics"
+                {:loggedInUser logged-in-user, :chatWith chat-with}))
 
-(defn add-tactic [user-tactics logged-in-user chat-with tactic]
-  (update user-tactics logged-in-user
-          (fn [tactics]
-            (conj (or tactics [])
-                  {:chat-with chat-with :tactic tactic}))))
+(defn add-tactic [logged-in-user chat-with tactic]
+  (db/insert "tactics" {:loggedInUser logged-in-user
+                        :chatWith chat-with
+                        :tactic tactic}))
 
-(defn compute-chat-rate [messages username sentiment-analyzer]
-  (let [relevant-messages (filter #(= (:sentFrom %) username) messages)
+(defn compute-chat-rate [username sentiment-analyzer]
+  (let [messages (db/find-maps "messages" {:sentFrom username})
         scores (map #(case (sentiment-analyzer (:message %))
                        "Negative" 1
                        "Neutral" 2
-                       "Positive" 3) relevant-messages)
+                       "Positive" 3) messages)
         avg (if (empty? scores) 0 (/ (reduce + scores) (count scores)))]
     (cond
       (> avg 2.5) 3
       (> avg 1.5) 2
       :else 1)))
 
+(defn analyze-sentiment-by-user [username sentiment-analyzer]
+  (let [messages (db/find-maps "messages" {:sentFrom username})]
+    (map #(sentiment-analyzer (:message %)) messages)))
+
+(defn sentiment-analyzer [message]
+  (cond
+    (clojure.string/includes? message "great") "Positive"
+    (clojure.string/includes? message "bad") "Negative"
+    :else "Neutral"))
 
 
 

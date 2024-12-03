@@ -3,7 +3,9 @@
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [nrepl "1.1.1"] 
                  [midje "1.10.9"]
-                 [criterium "0.4.6"]] 
+                 [criterium "0.4.6"]
+                 [com.novemberain/monger "3.5.0"]
+                 [clojure.java-time "0.3.3"]] 
   :plugins [[cider/cider-nrepl "0.47.1"] 
             [lein-midje "3.2.1"]]
   )
