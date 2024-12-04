@@ -1,10 +1,43 @@
 (ns chatsanalyzer
   (:require [nrepl.server :as nrepl-server]
             [cider.nrepl :refer (cider-nrepl-handler)]
+            [clojure.string :as str]
             [maincode :refer :all]
             [db.core :as db]))
 
 ;This namespace is responsible for analyzing tactics and sentiment of messages
+
+(defn calculate-message-rate [message]
+  "Calculates the sentiment rate for a given message."
+  (cond
+    (str/includes? message "excellent") 5
+    (str/includes? message "great") 4
+    (str/includes? message "okay") 3
+    (str/includes? message "bad") 2
+    (str/includes? message "terrible") 1
+    :else 3))
+
+(defn calculate-chat-rate [messages]
+  "Calculates the average rate for all messages in the chat."
+  (if (empty? messages)
+    0 ; Default chat rate if no messages exist
+    (/ (reduce + (map :messageRate messages))
+       (count messages))))
+
+(defn compute-message-rate [chat-id message]
+  "Processes the message, updates the chat rate, and returns the message rate."
+  (let [rate (calculate-message-rate message)
+        chat (db/find-one-as-map "chats" {:_id chat-id})
+        all-messages (:messages chat)
+        updated-messages (conj all-messages {:message message :messageRate rate})
+        avg-rate (calculate-chat-rate updated-messages)] 
+    (db/update "chats"
+               {:_id chat-id}
+               {"$set" {:chatRate avg-rate}})
+    rate))
+
+
+
 
 (defn get-tactics-for-chat [user-tactics logged-in-user chat-with]
   (db/find-maps "tactics"

@@ -16,3 +16,6 @@
 
 (defn find-one-as-map [coll query]
   (mc/find-one-as-map (get-db) coll query)) 
+
+(defn update [coll query update-ops]
+  (mc/update (get-db) coll query update-ops))
