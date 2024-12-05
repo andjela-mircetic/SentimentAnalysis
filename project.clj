@@ -6,7 +6,6 @@
                  [criterium "0.4.6"]
                  [com.novemberain/monger "3.5.0"]
                  [clojure.java-time "0.3.3"]
-                 [clj-python/libpython-clj "2.024" :exclusions [org.checkerframework/checker-qual]]
                  [seesaw "1.5.0"]] 
   :plugins [[cider/cider-nrepl "0.47.1"] 
             [lein-midje "3.2.1"]] 

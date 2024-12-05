@@ -9,7 +9,7 @@
 
 (defn register-user [username]
   (if (db/find-one-as-map "users" {:username username})
-    {:error "Username already exists"}
+    {:success "Username already exists"}
     (do
       (db/insert "users" {:username username})
       {:success "User registered"})))
