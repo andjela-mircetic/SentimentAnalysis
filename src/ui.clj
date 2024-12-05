@@ -7,34 +7,43 @@
 
 (defn show-greeting [username]
   "Displays a dashboard for user's chats."
-  (let [frame (seesaw/frame :title "Dashboard"
-                            :content (seesaw/label (str "Hello, " username "!"))
+  (let [chat-data (maincode/get-chat-partners-with-last-message username)
+        chat-list (map (fn [{:keys [partner lastMessage]}]
+                         (seesaw/vertical-panel
+                          :items [(seesaw/label (str "Chat with: " partner))
+                                  (seesaw/label (str "Last message: " (:message lastMessage)))]))
+                       chat-data)
+        frame (seesaw/frame :title (str "Dashboard - " username)
+                            :content (seesaw/border-panel
+                                      :west (seesaw/scrollable
+                                             (seesaw/vertical-panel :items chat-list))
+                                      :center (seesaw/label "Chat details will appear here."))
                             :size [window-width :by window-height]
                             :on-close :exit)]
     (seesaw/show! frame)))
 
 (defn prompt-for-username []
   "Asks user to enter a username and calls the register-user function."
-  (let [username-field (seesaw/text :columns 20) 
+  (let [username-field (seesaw/text :columns 20)
         submit-button (seesaw/button :text "Register"
                                      :listen [:action (fn [e]
                                                         (let [username (seesaw/text username-field)]
-                                                          (println "Username entered:" username) 
+                                                          (println "Username entered:" username)
                                                           (if (not (clojure.string/blank? username))
                                                             (do
                                                               (println "Attempting to register user...")
                                                               (let [response (maincode/register-user username)]
                                                                 (println "Response from register-user:" response)
                                                                 (if (:error response)
-                                                                  (seesaw/alert :title "Error" :message (:error response))
+                                                                  (seesaw/alert "Error" (:error response))
                                                                   (show-greeting username))))
-                                                            (seesaw/alert :title "Input Error" :message "Username cannot be empty"))))])]
+                                                            (seesaw/alert "Input Error" "Username cannot be empty"))))])]
     (let [frame (seesaw/frame :title "Enter your username"
                               :content (seesaw/vertical-panel
-                                        :items [(seesaw/label "Enter your username:") 
+                                        :items [(seesaw/label "Enter your username:")
                                                 username-field
-                                                submit-button]) 
-                              :size [640 :by 480] 
+                                                submit-button])
+                              :size [640 :by 480]
                               :on-close :exit)]
       (seesaw/show! frame))))
 
