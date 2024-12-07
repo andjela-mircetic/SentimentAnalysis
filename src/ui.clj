@@ -8,12 +8,16 @@
 (def window-height 640)
 
 (defonce ws-connection (atom nil))
+(defonce current-chat (atom nil))  ;current chat details
 
 (defn handle-incoming-message [message]
   "Handle incoming WebSocket messages."
-  (let [data (json/decode message true)]
-    (println "Received WebSocket message:" data) 
-    ))
+  (let [data (json/decode message true)
+        sender (get data "sender")
+        message-text (get data "message")]
+    (println "Received WebSocket message:" data)
+    (when @current-chat
+      (swap! current-chat update :messages conj {:from sender :message message-text}))))
 
 (defn start-websocket-client []
   (let [url "ws://localhost:8080"
@@ -31,14 +35,39 @@
     (ws/send-msg conn (json/encode message))
     (println "WebSocket is not connected.")))
 
+(defn update-chat-window [chat]
+  "Updates the chat window with messages."
+  (let [message-list (map (fn [{:keys [from message]}]
+                            (seesaw/label :text (str (if (= from "me") "You" from) ": " message)))
+                          (:messages chat))
+        chat-panel (seesaw/vertical-panel :items message-list)
+        message-field (seesaw/text :columns 30 :id :message-field)
+        send-button (seesaw/button :text "Send"
+                                   :listen [:action (fn [e]
+                                                      (let [msg (seesaw/text message-field)]
+                                                        (send-message-via-websocket {:recipient (:partner chat) :message msg})
+                                                        (swap! current-chat update :messages conj {:from "me" :message msg})
+                                                        (seesaw/text! message-field "")))])
+
+        frame (seesaw/frame :title (str "Chat with " (:partner chat))
+                            :content (seesaw/border-panel
+                                      :center chat-panel
+                                      :south (seesaw/horizontal-panel
+                                              :items [message-field send-button]))
+                            :size [window-width :by window-height]
+                            :on-close :exit)]
+    (seesaw/show! frame)))
+
 (defn show-greeting [username]
   "Displays a dashboard for user's chats."
   (let [chat-data (maincode/get-chat-partners-with-last-message username)
         chat-list (map (fn [{:keys [partner lastMessage]}]
-                         (seesaw/vertical-panel
-                          :items [(seesaw/label (str "Chat with: " partner))
-                                  (seesaw/label (str "Last message: " (:message lastMessage)))
-                                  (seesaw/label (str "-----------------------"))]))
+                         (seesaw/button :text (str "Chat with: " partner)
+                                        :listen [:action
+                                                 (fn [e]
+                                                   (reset! current-chat {:partner partner
+                                                                         :messages [{:from partner :message (:message lastMessage)}]})
+                                                   (update-chat-window @current-chat))]))
                        chat-data)
         frame (seesaw/frame :title (str "Dashboard - " username)
                             :content (seesaw/border-panel
