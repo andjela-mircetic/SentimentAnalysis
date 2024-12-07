@@ -1,9 +1,35 @@
 (ns ui
   (:require [seesaw.core :as seesaw]
-            [maincode :as maincode]))
+            [maincode :as maincode]
+            [gniazdo.core :as ws]
+            [cheshire.core :as json]))
 
 (def window-width 640)
 (def window-height 640)
+
+(defonce ws-connection (atom nil))
+
+(defn handle-incoming-message [message]
+  "Handle incoming WebSocket messages."
+  (let [data (json/decode message true)]
+    (println "Received WebSocket message:" data) 
+    ))
+
+(defn start-websocket-client []
+  (let [url "ws://localhost:8080"
+        connection (ws/connect url
+                               :on-receive handle-incoming-message
+                               :on-error (fn [error]
+                                           (println "WebSocket error:" error))
+                               :on-close (fn [status]
+                                           (println "WebSocket closed:" status)))]
+    (reset! ws-connection connection)
+    (println "Connected to WebSocket server at" url)))
+
+(defn send-message-via-websocket [message]
+  (if-let [conn @ws-connection]
+    (ws/send-msg conn (json/encode message))
+    (println "WebSocket is not connected.")))
 
 (defn show-greeting [username]
   "Displays a dashboard for user's chats."
@@ -11,7 +37,8 @@
         chat-list (map (fn [{:keys [partner lastMessage]}]
                          (seesaw/vertical-panel
                           :items [(seesaw/label (str "Chat with: " partner))
-                                  (seesaw/label (str "Last message: " (:message lastMessage)))]))
+                                  (seesaw/label (str "Last message: " (:message lastMessage)))
+                                  (seesaw/label (str "-----------------------"))]))
                        chat-data)
         frame (seesaw/frame :title (str "Dashboard - " username)
                             :content (seesaw/border-panel
@@ -36,7 +63,9 @@
                                                                 (println "Response from register-user:" response)
                                                                 (if (:error response)
                                                                   (seesaw/alert "Error" (:error response))
-                                                                  (show-greeting username))))
+                                                                  (do
+                                                                    (start-websocket-client)
+                                                                    (show-greeting username)))))
                                                             (seesaw/alert "Input Error" "Username cannot be empty"))))])]
     (let [frame (seesaw/frame :title "Enter your username"
                               :content (seesaw/vertical-panel

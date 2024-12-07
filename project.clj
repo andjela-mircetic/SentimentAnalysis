@@ -6,7 +6,10 @@
                  [criterium "0.4.6"]
                  [com.novemberain/monger "3.5.0"]
                  [clojure.java-time "0.3.3"]
-                 [seesaw "1.5.0"]] 
+                 [seesaw "1.5.0"] 
+                 [http-kit "2.9.0-alpha1"] 
+                 [cheshire "5.10.0"]
+                 [stylefruits/gniazdo "1.2.2"] ] 
   :plugins [[cider/cider-nrepl "0.47.1"] 
             [lein-midje "3.2.1"]] 
   :main ui)
