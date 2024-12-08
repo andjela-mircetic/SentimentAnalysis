@@ -39,14 +39,21 @@
     (if-let [conn @ws-connection]
       (ws/send-msg conn (json/encode message))
       (println "WebSocket is not connected.")))
+  
 (defn update-chat-panel [chat central-panel]
-  "Updates the central panel with chat messages and input field."
+  "Updates the central panel with chat details."
   (if chat
     (let [sorted-messages (sort-by :time (:messages chat))
           message-list (map (fn [{:keys [sentFrom message]}]
                               (seesaw/label :text (str sentFrom ": " message)))
                             sorted-messages)
           chat-panel (seesaw/vertical-panel :items message-list)
+          chat-rate-label (seesaw/label :text (str "Chat rate: " (or (:chatRate chat) 0)))
+          tactics-button (seesaw/button :text "Tell me some tactics"
+                                        :listen [:action
+                                                 (fn [e]
+                                                   (seesaw/alert "Tactics" "will be implemented"))])
+          top-panel (seesaw/horizontal-panel :items [chat-rate-label tactics-button])
           message-field (seesaw/text :columns 30 :id :message-field)
           send-button (seesaw/button :text "Send"
                                      :listen [:action
@@ -57,17 +64,17 @@
                                                                                :sentTo (:partner chat)
                                                                                :message msg})
                                                   (swap! current-chat update :messages conj {:sentFrom @logged-in-username :message msg})
-
                                                   (seesaw/text! message-field "")
                                                   (update-chat-panel @current-chat central-panel)))])
 
           new-content (seesaw/border-panel
+                       :north top-panel
                        :center chat-panel
                        :south (seesaw/horizontal-panel
                                :items [message-field send-button]))]
       (seesaw/config! central-panel :items [new-content])
       (seesaw/repaint! central-panel))
-    (do 
+    (do
       (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)])
       (seesaw/repaint! central-panel))))
 
