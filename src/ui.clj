@@ -44,7 +44,7 @@
     "Updates the central panel with chat messages and input field."
     (let [sorted-messages (sort-by :time (:messages chat))  
           message-list (map (fn [{:keys [sentFrom message]}]
-                              (seesaw/label :text (str (if (= sentFrom "me") "You" sentFrom) ": " message)))
+                              (seesaw/label :text (str sentFrom ": " message)))
                             sorted-messages)
           chat-panel (seesaw/vertical-panel :items message-list)
           message-field (seesaw/text :columns 30 :id :message-field)
@@ -55,7 +55,8 @@
                                                                                        :sentFrom @logged-in-username
                                                                                        :sentTo (:partner chat)
                                                                                        :message msg})
-                                                          (swap! current-chat update :messages conj {:sentFrom "me" :message msg})
+                                                          (swap! current-chat update :messages conj {:sentFrom @logged-in-username :message msg})
+
                                                           (seesaw/text! message-field "")
                                                         
                                                           (update-chat-panel @current-chat central-panel)))])
