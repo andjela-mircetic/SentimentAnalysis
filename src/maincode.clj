@@ -99,6 +99,21 @@
                  (and (= (:sentFrom %) user2) (= (:sentTo %) user1)))
             messages)))
 
+(defn create-chat [user1 user2] 
+  (let [user1-exists (db/find-one-as-map "users" {:username user1})
+        user2-exists (db/find-one-as-map "users" {:username user2})
+        existing-chat (db/find-one-as-map "chats" {:actors {:$all [user1 user2]}})]
+    (cond
+      (not user1-exists) {:error (str "User " user1 " does not exist")}
+      (not user2-exists) {:error (str "User " user2 " does not exist")}
+      existing-chat {:error "Chat already exists between these users"}
+      :else (do
+              (db/insert "chats" {:actors [user1 user2]
+                                  :messages []
+                                  :tactics []
+                                  :chatRate 0})
+              {:success "Chat created successfully"}))))
+
 
 ;(defn get-recent-messages [messages n]
  ; (take-last n messages))

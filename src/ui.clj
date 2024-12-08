@@ -89,58 +89,97 @@
     (seesaw/config! chat-sidebar :items chat-list)
     (seesaw/repaint! chat-sidebar)))
 
-  (defn show-greeting [username]
-    "Displays a dashboard for user's chats."
-    (reset! logged-in-username username)
-    (let [chat-data (maincode/get-chat-partners-with-last-message username)
-          central-panel (seesaw/vertical-panel :id :central-panel)
-          chat-list (if (empty? chat-data)
-                      [(seesaw/label :text "Chats will appear here." :foreground :gray)]
-                      (map (fn [{:keys [partner lastMessage]}]
-                             (seesaw/button :text (str "Chat with: " partner)
-                                            :listen [:action
-                                                     (fn [e]
-                                                       (reset! current-chat {:partner partner
-                                                                             :messages (maincode/get-all-messages-between-two-users username partner)})
-                                                       (update-chat-panel @current-chat central-panel))]))
-                           chat-data))
-          frame (seesaw/frame :title (str "Dashboard - " username)
-                              :content (seesaw/border-panel
-                                        :west (seesaw/scrollable
-                                               (seesaw/vertical-panel :items chat-list))
-                                        :center central-panel)
-                              :size [window-width :by window-height]
-                              :on-close :exit)]
-      (reset! app-frame frame)
-      (seesaw/show! frame)))
+  
+ (defn create-chat-popup []
+   "Displays a popup for creating a new chat."
+   (let [username-field (seesaw/text :columns 20)
+         popup (atom nil)
+         confirm-button (seesaw/button :text "Confirm"
+                                       :listen [:action
+                                                (fn [e]
+                                                  (let [recipient-username (seesaw/text username-field)]
+                                                    (if (clojure.string/blank? recipient-username)
+                                                      (seesaw/alert "Input Error" "Please enter a valid username.")
+                                                      (let [response (maincode/create-chat @logged-in-username recipient-username)]
+                                                        (if (:error response)
+                                                          (seesaw/alert "Error" (:error response))
+                                                          (do
+                                                            (refresh-chat-list)
+                                                            (seesaw/dispose! @popup)))))))])
+         close-button (seesaw/button :text "Close"
+                                     :listen [:action
+                                              (fn [e]
+                                                (seesaw/dispose! @popup))])
+         popup-frame (seesaw/frame :title "Create New Chat"
+                                   :content (seesaw/vertical-panel
+                                             :items [(seesaw/label "Who do you want to send a message to?")
+                                                     username-field
+                                                     (seesaw/horizontal-panel
+                                                      :items [confirm-button close-button])])
+                                   :resizable? false
+                                   :size [300 :by 150])]
+     (reset! popup popup-frame) 
+     (seesaw/show! popup-frame)))
 
-  (defn prompt-for-username []
-    "Asks the user to enter a username and calls the register-user function."
-    (let [username-field (seesaw/text :columns 20)
-          submit-button (seesaw/button :text "Register"
-                                       :listen [:action (fn [e]
-                                                          (let [username (seesaw/text username-field)]
-                                                            (println "Username entered:" username)
-                                                            (if (not (clojure.string/blank? username))
-                                                              (do
-                                                                (println "Attempting to register user...")
-                                                                (let [response (maincode/register-user username)]
-                                                                  (println "Response from register-user:" response)
-                                                                  (if (:error response)
-                                                                    (seesaw/alert "Error" (:error response))
-                                                                    (do
-                                                                      (start-websocket-client)
-                                                                      (show-greeting username)))))
-                                                              (seesaw/alert "Input Error" "Username cannot be empty"))))])
-          frame (seesaw/frame :title "Enter your username"
-                              :content (seesaw/vertical-panel
-                                        :items [(seesaw/label "Enter your username:")
-                                                username-field
-                                                submit-button])
-                              :size [640 :by 480]
-                              :on-close :exit)]
-      (seesaw/show! frame)))
+  
 
+(defn show-greeting [username]
+  "Displays a dashboard for user's chats."
+  (reset! logged-in-username username)
+  (let [chat-data (maincode/get-chat-partners-with-last-message username)
+        central-panel (seesaw/vertical-panel :id :central-panel)
+        create-chat-button (seesaw/button :text "Create New Chat"
+                                          :listen [:action (fn [_] (create-chat-popup))])
+        chat-list (if (empty? chat-data)
+                    [(seesaw/label :text "Chats will appear here." :foreground :gray)]
+                    (map (fn [{:keys [partner lastMessage]}]
+                           (seesaw/button :text (str "Chat with: " partner)
+                                          :listen [:action
+                                                   (fn [e]
+                                                     (reset! current-chat {:partner partner
+                                                                           :messages (maincode/get-all-messages-between-two-users username partner)})
+                                                     (update-chat-panel @current-chat central-panel))]))
+                         chat-data))
+        frame (seesaw/frame :title (str "Dashboard - " username)
+                            :content (seesaw/border-panel
+                                      :north create-chat-button
+                                      :west (seesaw/scrollable
+                                             (seesaw/vertical-panel :id :chat-sidebar
+                                                                    :items chat-list))
+                                      :center central-panel)
+                            :size [window-width :by window-height]
+                            :on-close :exit)]
+    (reset! app-frame frame)
+    (seesaw/show! frame)))
+
+(defn prompt-for-username []
+  "Asks the user to enter a username and calls the register-user function."
+  (let [username-field (seesaw/text :columns 20)
+        submit-button (seesaw/button :text "Register"
+                                     :listen [:action (fn [e]
+                                                        (let [username (seesaw/text username-field)]
+                                                          (println "Username entered:" username)
+                                                          (if (not (clojure.string/blank? username))
+                                                            (do
+                                                              (println "Attempting to register user...")
+                                                              (let [response (maincode/register-user username)]
+                                                                (println "Response from register-user:" response)
+                                                                (if (:error response)
+                                                                  (seesaw/alert "Error" (:error response))
+                                                                  (do
+                                                                    (start-websocket-client)
+                                                                    (show-greeting username)))))
+                                                            (seesaw/alert "Input Error" "Username cannot be empty"))))])
+        frame (seesaw/frame :title "Enter your username"
+                            :content (seesaw/vertical-panel
+                                      :items [(seesaw/label "Enter your username:")
+                                              username-field
+                                              submit-button])
+                            :size [640 :by 480]
+                            :on-close :exit)]
+    (seesaw/show! frame)))
+
+  
   (defn -main []
     "The main entry point of the app."
     (prompt-for-username))
