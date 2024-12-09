@@ -53,23 +53,21 @@
           {:success "Message sent to new chat"})))
     {:error "Sender or recipient does not exist"}))
 
-;; WebSocket handler using as-channel
 (defn ws-handler [ring-req]
   (if-not (:websocket? ring-req)
     {:status 200 :body "Welcome to the chatroom! JS client connecting..."}
     (ws/as-channel ring-req
                    {:on-open (fn [ch]
-                              ;; Add the new channel to the clients set
                               (swap! clients conj ch))
                     :on-receive (fn [ch message]
                                   (let [data (json/decode message true)]
                                     (case (:type data)
                                       "register" (let [response (register-user (:username data))]
-                                                   (ws/send! ch (json/encode response))) ;; Respond to the sender
+                                                   (ws/send! ch (json/encode response)))
                                       "message" (let [response (send-message (:sentFrom data)
                                                                              (:sentTo data)
                                                                              (:message data))]
-                                                  (broadcast-to-clients response)) ;; Notify all clients
+                                                  (broadcast-to-clients response))
                                       (ws/send! ch (json/encode {:error "Unknown message type"}))))) 
                     :on-close (fn [ch status-code]
                                 (swap! clients disj ch))})))
@@ -91,13 +89,14 @@
     result))
 
 (defn get-all-messages-between-two-users [user1 user2]
-  "Fetches all messages between two users."
-  (let [chats (db/find-maps "chats"
-                            {:actors {:$all [user1 user2]}})
-        messages (mapcat :messages chats)]
-    (filter #(or (and (= (:sentFrom %) user1) (= (:sentTo %) user2))
-                 (and (= (:sentFrom %) user2) (= (:sentTo %) user1)))
-            messages)))
+  "Fetches all messages and chatRate between two users."
+  (let [chats (db/find-maps "chats" {:actors {:$all [user1 user2]}})
+        chat (first chats)
+        messages (mapcat :messages chats)
+        chat-rate (:chatRate chat)]
+    {:messages messages
+     :chatRate chat-rate}))
+
 
 (defn create-chat [user1 user2] 
   (let [user1-exists (db/find-one-as-map "users" {:username user1})

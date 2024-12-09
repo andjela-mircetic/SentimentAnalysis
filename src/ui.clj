@@ -48,7 +48,10 @@
                               (seesaw/label :text (str sentFrom ": " message)))
                             sorted-messages)
           chat-panel (seesaw/vertical-panel :items message-list)
-          chat-rate-label (seesaw/label :text (str "Chat rate: " (or (:chatRate chat) 0)))
+          chat-rate-label (seesaw/label :text (str "Chat rate: "
+                                                   (if-let [rate (:chatRate chat)]
+                                                     (format "%.2f" (double rate))
+                                                     "0.00")))
           tactics-button (seesaw/button :text "Tell me some tactics"
                                         :listen [:action
                                                  (fn [e]
@@ -78,7 +81,6 @@
       (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)])
       (seesaw/repaint! central-panel))))
 
-
 (defn refresh-chat-list []
   "Refreshes the chat list when no chats are available."
   (let [chat-data (maincode/get-chat-partners-with-last-message @logged-in-username)
@@ -89,7 +91,8 @@
                                           :listen [:action
                                                    (fn [e]
                                                      (reset! current-chat {:partner partner
-                                                                           :messages (maincode/get-all-messages-between-two-users @logged-in-username partner)})
+                                                                           :messages (:messages (maincode/get-all-messages-between-two-users @logged-in-username partner))
+                                                                           :chatRate (:chatRate (maincode/get-all-messages-between-two-users @logged-in-username partner))})
                                                      (update-chat-panel @current-chat (seesaw/select @app-frame [:#central-panel])))]))
                          chat-data))
         chat-sidebar (seesaw/select @app-frame [:#chat-sidebar])]
@@ -119,7 +122,7 @@
                                                 (seesaw/dispose! @popup))])
          popup-frame (seesaw/frame :title "Create New Chat"
                                    :content (seesaw/vertical-panel
-                                             :items [(seesaw/label "Who do you want to send a message to?")
+                                             :items [(seesaw/label "Who do you want to message?")
                                                      username-field
                                                      (seesaw/horizontal-panel
                                                       :items [confirm-button close-button])])
@@ -144,7 +147,8 @@
                                           :listen [:action
                                                    (fn [e]
                                                      (reset! current-chat {:partner partner
-                                                                           :messages (maincode/get-all-messages-between-two-users username partner)})
+                                                                           :messages (:messages (maincode/get-all-messages-between-two-users @logged-in-username partner))
+                                                                           :chatRate (:chatRate (maincode/get-all-messages-between-two-users @logged-in-username partner))})
                                                      (update-chat-panel @current-chat central-panel))]))
                          chat-data))
         frame (seesaw/frame :title (str "Dashboard - " username)
