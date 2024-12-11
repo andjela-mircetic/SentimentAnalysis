@@ -4,32 +4,28 @@
             [clojure.string :as str] 
             [clojure.java.shell :as shell]
             [db.core :as db]
+            [clojure.java.io :as io]
             ))
 
 
 ;This namespace is responsible for analyzing tactics and sentiment of messages
 
-(defn analyze-sentiment [text]
-  (let [python-script "/Users/andjelamircetic/Desktop/sentimentanalysis/src/vader_sentiment.py"
-        result (shell/sh "python3" python-script text)] 
+(defn calculate-message-rate [text]
+  "Calculates the sentiment rate for a given message."
+  (let [python-script (str (io/file "src/vader_sentiment.py"))
+        result (shell/sh "python3" python-script text)]
     (if (= 0 (:exit result))
-      (do
-        (println (:out result))
-        (:out result))
+      (let [compound-score (Double/parseDouble (clojure.string/trim (:out result)))
+            sentiment-score (cond
+                              (<= compound-score -0.6) 1
+                              (<= compound-score -0.2) 2
+                              (<= compound-score 0.2) 3
+                              (<= compound-score 0.6) 4
+                              :else 5)]
+        sentiment-score)
       (do
         (println "Error: " (:err result))
-        "Neutral"))))
-
-
-(defn calculate-message-rate [message]
-  "Calculates the sentiment rate for a given message."
-  (cond
-    (str/includes? message "excellent") 5
-    (str/includes? message "great") 4
-    (str/includes? message "okay") 3
-    (str/includes? message "bad") 2
-    (str/includes? message "terrible") 1
-    :else 3))
+        nil))))
 
 (defn calculate-chat-rate [messages]
   "Calculates the average rate for all messages in the chat."
@@ -85,6 +81,3 @@
     (clojure.string/includes? message "great") "Positive"
     (clojure.string/includes? message "bad") "Negative"
     :else "Neutral"))
-
-
-
