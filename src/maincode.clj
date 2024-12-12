@@ -97,7 +97,6 @@
     {:messages messages
      :chatRate chat-rate}))
 
-
 (defn create-chat [user1 user2] 
   (let [user1-exists (db/find-one-as-map "users" {:username user1})
         user2-exists (db/find-one-as-map "users" {:username user2})
@@ -113,13 +112,10 @@
                                   :chatRate 0})
               {:success "Chat created successfully"}))))
 
-
-;(defn get-recent-messages [messages n]
- ; (take-last n messages))
-
-;(defn get-messages-sent-by-user [username]
- ;(db/find-maps "messages" {:sentFrom username}))
-
-;(defn get-messages-received-by-user [username]
-;  (db/find-maps "messages" {:sentTo username}))
-
+(defn find-received-messages [chat-logs username]
+  "Finds messages in the chat logs where the :sentFrom key matches the given username."
+  (mapcat (fn [chat]
+            (filter (fn [message]
+                      (= (:sentFrom message) username))
+                    (:messages chat)))
+          chat-logs))

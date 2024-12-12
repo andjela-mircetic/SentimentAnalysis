@@ -1,7 +1,9 @@
 (ns ui
   (:require [seesaw.core :as seesaw]
             [maincode :as maincode]
+            [chatsanalyzer :as chatsanalyzer]
             [gniazdo.core :as ws]
+            [clojure.string :as str] 
             [cheshire.core :as json]))
 
 (def window-width 640)
@@ -40,6 +42,21 @@
       (ws/send-msg conn (json/encode message))
       (println "WebSocket is not connected.")))
   
+  (defn show-tactics []
+    "Analyzes the received messages and generates gaming tactics."
+    (if-let [chat @current-chat]
+      (let [logged-in-user @logged-in-username
+            opponent (:partner chat)
+            chat-logs (maincode/get-all-messages-between-two-users logged-in-user opponent)
+            received-messages (maincode/find-received-messages [chat-logs] opponent)
+            tactics-map (chatsanalyzer/generate-gaming-tactics received-messages)
+            tactics (get tactics-map :tactics)]
+        (if (seq tactics)
+          (seesaw/alert "Tactics" (clojure.string/join "\n" tactics))
+          (seesaw/alert "Tactics" "No specific tactics to suggest at the moment.")))
+      (seesaw/alert "Error" "No active chat selected.")))
+
+  
 (defn update-chat-panel [chat central-panel]
   "Updates the central panel with chat details."
   (if chat
@@ -51,11 +68,11 @@
           chat-rate-label (seesaw/label :text (str "Chat rate: "
                                                    (if-let [rate (:chatRate chat)]
                                                      (format "%.2f" (double rate))
-                                                     "0.00")))
+                                                     "0.00"))) 
           tactics-button (seesaw/button :text "Tell me some tactics"
                                         :listen [:action
-                                                 (fn [e]
-                                                   (seesaw/alert "Tactics" "will be implemented"))])
+                                                 (fn [_] (show-tactics))])
+
           top-panel (seesaw/horizontal-panel :items [chat-rate-label tactics-button])
           message-field (seesaw/text :columns 30 :id :message-field)
           send-button (seesaw/button :text "Send"

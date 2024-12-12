@@ -46,38 +46,87 @@
                {"$set" {:chatRate avg-rate}})
     rate))
 
+(defn generate-gaming-tactics [messages]
+  "Generates gaming-focused tactics based on the sentiment rates of messages sent by another user.
+   If there are no messages, returns a specific message indicating silence."
+  (if (empty? messages)
+    {:tactics ["Patience! This player is still silent."]}
+    (let [rates (map :messageRate messages)
+          rate-distribution (frequencies rates)
+          total-messages (count messages)
+          rate-percentage (fn [rate]
+                            (if (zero? total-messages)
+                              0
+                              (double (/ (get rate-distribution rate 0) total-messages))))
+          tactics (cond
+                    ;; Mostly negative messages (rates 1 and 2 dominate)
+                    (>= (+ (rate-percentage 1) (rate-percentage 2)) 0.6)
+                    ["Chill out a bit—take a breather, it's just a game."
+                     "Try hyping them up instead of calling them out."
+                     "Focus on the next match instead of tilting over this one."
+                     "Remind them: 'Even Faker has bad days!'"]
 
+                    ;; Mostly neutral messages (rate 3 dominates)
+                    (>= (rate-percentage 3) 0.7)
+                    ["Keep comms clear—let’s not overthink it."
+                     "Break it down: 'What's the play for this map?'"
+                     "Mid-game? Time for some hype calls!"
+                     "After this, maybe brainstorm some new strats."]
 
+                    ;; Mostly positive messages (rates 4 and 5 dominate)
+                    (>= (+ (rate-percentage 4) (rate-percentage 5)) 0.6)
+                    ["GG vibes all around—keep the energy up!"
+                     "Time to try some wild strats while we're on a roll."
+                     "Who’s MVP? Let’s keep feeding their plays."
+                     "Keep the squad hyped up—'Victory Royale incoming!'"]
 
+                    ;; Mixed messages (balanced rates)
+                    (every? #(<= (rate-percentage %) 0.4) [1 2 3 4 5])
+                    ["Mood’s all over—try a quick pep talk."
+                     "Find out what's bothering the team and fix it."
+                     "Mid-game? Suggest small tweaks without overcomplicating."
+                     "Post-match, check what's been working or not."]
 
+                    ;; High rate of very positive (rate 5 > 40%)
+                    (>= (rate-percentage 5) 0.4)
+                    ["Big plays happening—shout ‘em out more!"
+                     "Momentum's good—go for some aggressive moves."
+                     "Everyone’s vibing—suggest crazy comps or strats."
+                     "Positive vibes = ranked grind time!"]
 
-;(defn get-tactics-for-chat [user-tactics logged-in-user chat-with]
- ; (db/find-maps "tactics"
- ;               {:loggedInUser logged-in-user, :chatWith chat-with}))
+                    ;; High rate of very negative (rate 1 > 40%)
+                    (>= (rate-percentage 1) 0.4)
+                    ["Squad's tilted—suggest a chill game or quick break."
+                     "Mute toxic comms and focus on your own plays."
+                     "Remind them: 'We're all noobs compared to the pros.'"
+                     "Maybe swap roles or try new characters?"]
 
-;(defn add-tactic [logged-in-user chat-with tactic]
-;  (db/insert "tactics" {:loggedInUser logged-in-user
-;                        :chatWith chat-with
-;                        :tactic tactic}))
+                    ;; Predominantly slightly negative (rate 2 > 40%)
+                    (>= (rate-percentage 2) 0.4)
+                    ["Looks like frustrations creeping in—remind them to focus."
+                     "Ask: 'What’s the play to turn this around?'"
+                     "Encourage them to try again—'We're still in this!'"
+                     "Bad vibes? Joke it off with some light banter."]
 
-(defn compute-chat-rate [username sentiment-analyzer]
-  (let [messages (db/find-maps "messages" {:sentFrom username})
-        scores (map #(case (sentiment-analyzer (:message %))
-                       "Negative" 1
-                       "Neutral" 2
-                       "Positive" 3) messages)
-        avg (if (empty? scores) 0 (/ (reduce + scores) (count scores)))]
-    (cond
-      (> avg 2.5) 3
-      (> avg 1.5) 2
-      :else 1)))
+                    ;; Predominantly slightly positive (rate 4 > 40%)
+                    (>= (rate-percentage 4) 0.4)
+                    ["Squad's in a good spot—suggest a sneaky strat."
+                     "Keep the comms light but focused—no distractions."
+                     "Let’s lock it in and close this match strong!"
+                     "Throw out ideas: 'Who wants to pull off the big play?'"]
 
-(defn analyze-sentiment-by-user [username sentiment-analyzer]
-  (let [messages (db/find-maps "messages" {:sentFrom username})]
-    (map #(sentiment-analyzer (:message %)) messages)))
+                    ;; Rapid swings (negative and positive alternating)
+                    (and (>= (rate-percentage 1) 0.2)
+                         (>= (rate-percentage 5) 0.2))
+                    ["Team’s mood’s a rollercoaster—help stabilize it."
+                     "Keep calls short and clear—minimize confusion."
+                     "Post-game? Suggest a cooldown game or a strat talk."
+                     "Focus on shared goals: ‘Let's all get the dub!’"]
 
-(defn sentiment-analyzer [message]
-  (cond
-    (clojure.string/includes? message "great") "Positive"
-    (clojure.string/includes? message "bad") "Negative"
-    :else "Neutral"))
+                    ;; Default: Balanced with no clear trend
+                    :else
+                    ["Call out good plays to keep the squad motivated."
+                     "Don’t overthink—stick to basics and have fun."
+                     "Remind them: 'Win or lose, it’s about the grind!'"
+                     "Suggest a debrief after to level up gameplay."])]
+      {:tactics tactics})))
