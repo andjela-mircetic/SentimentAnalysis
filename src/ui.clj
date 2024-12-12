@@ -14,35 +14,13 @@
 (defonce logged-in-username (atom nil))
 (defonce app-frame (atom nil))
 
-(defn handle-incoming-message [message]
-  "Handle incoming WebSocket messages."
-  (let [data (json/decode message true)
-        sender (get data "sentFrom")  
-        message-text (get data "message")]
-    (println "Received WebSocket message:" data)
-    (when @current-chat
-      (swap! current-chat update :messages conj {:sentFrom sender :message message-text}))))
-
-
-  (defn start-websocket-client []
-    "Starts a WebSocket client to communicate with the server."
-    (let [url "ws://localhost:8080"
-          connection (ws/connect url
-                                 :on-receive handle-incoming-message
-                                 :on-error (fn [error]
-                                             (println "WebSocket error:" error))
-                                 :on-close (fn [status]
-                                             (println "WebSocket closed:" status)))]
-      (reset! ws-connection connection)
-      (println "Connected to WebSocket server at" url)))
-
-  (defn send-message-via-websocket [message]
+(defn send-message-via-websocket [message]
     "Sends a message via WebSocket."
     (if-let [conn @ws-connection]
       (ws/send-msg conn (json/encode message))
       (println "WebSocket is not connected.")))
   
-  (defn show-tactics []
+(defn show-tactics []
     "Analyzes the received messages and generates gaming tactics."
     (if-let [chat @current-chat]
       (let [logged-in-user @logged-in-username
@@ -92,10 +70,10 @@
                        :center chat-panel
                        :south (seesaw/horizontal-panel
                                :items [message-field send-button]))]
-      (seesaw/config! central-panel :items [new-content])
+      (seesaw/config! central-panel :items [new-content]) 
       (seesaw/repaint! central-panel))
     (do
-      (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)])
+      (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)]) 
       (seesaw/repaint! central-panel))))
 
 (defn refresh-chat-list []
@@ -116,6 +94,29 @@
     (seesaw/config! chat-sidebar :items chat-list)
     (seesaw/repaint! chat-sidebar)))
 
+  (defn handle-incoming-message [message]
+    "Handle incoming WebSocket messages."
+    (let [data (json/decode message true)
+          sender (get data "sentFrom")
+          message-text (get data "message")]
+      (println "Received WebSocket message:" data)
+      (when @current-chat
+        (when (= sender (:partner @current-chat))
+          (swap! current-chat update :messages conj {:sentFrom sender :message message-text}) 
+          (update-chat-panel @current-chat (seesaw/select @app-frame [:#central-panel]))))
+      (refresh-chat-list)))
+  
+  (defn start-websocket-client []
+    "Starts a WebSocket client to communicate with the server."
+    (let [url "ws://localhost:8080"
+          connection (ws/connect url
+                                 :on-receive handle-incoming-message
+                                 :on-error (fn [error]
+                                             (println "WebSocket error:" error))
+                                 :on-close (fn [status]
+                                             (println "WebSocket closed:" status)))]
+      (reset! ws-connection connection)
+      (println "Connected to WebSocket server at" url)))
   
  (defn create-chat-popup []
    "Displays a popup for creating a new chat."
@@ -147,8 +148,6 @@
                                    :size [300 :by 150])]
      (reset! popup popup-frame) 
      (seesaw/show! popup-frame)))
-
-  
 
 (defn show-greeting [username]
   "Displays a dashboard for user's chats."
@@ -207,7 +206,6 @@
                             :on-close :exit)]
     (seesaw/show! frame)))
 
-  
-  (defn -main []
+   (defn -main []
     "The main entry point of the app."
     (prompt-for-username))
