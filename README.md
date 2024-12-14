@@ -16,7 +16,7 @@ The central panel of the dashboard is designed to display the messages of the cu
 
 Above the conversation view, the application provides sentiment analytics. It calculates and displays the overall "chat rate," a measure of sentiment and tone of the conversation - from 1 (meaning bad tone) and 5 rating very positive tone of the chat. This chat rate updates as new messages are exchanged, offering a quantitative view of the interaction. 
 
-For those who enjoy an element of strategy, the application introduces a unique feature: tactical suggestions. By analyzing messages from your chat partner, it generates insights or tactics that could guide your future responses. These tactics are based on frequency of messages sent with different message rates, and considers how many times are messages of specific tone sent, now just average chat rate.
+For those who enjoy an element of strategy, the application introduces a unique feature: tactical suggestions. By analyzing messages from your chat partner, it generates insights or tactics that could guide your future responses. These tactics are based on frequency of messages sent with different message rates, and considers how many times are messages of specific tone sent, now just average chat rate. The sentiment analysis is done using the VADER library, lexicon and rule-based sentiment analysis tool that is specifically attuned to sentiments expressed in social media.
 
 Sending a message is straightforward. A text field at the bottom of the panel lets you compose your message. Clicking the "Send" button instantly dispatches it to your chat partner while simultaneously updating the conversation view and recalculating the chat rate. The WebSocket connection ensures that messages appear in real-time on both ends.
 
@@ -54,7 +54,7 @@ This project has not only strengthened my understanding of Clojure but also expa
 
 [2] Higginbotham, D. (2017). Clojure for the Brave and True. Independently published. ISBN: 978-0692645370.
 
-[3] https://github.com/cjhutto/vaderSentiment#vader-sentiment-analysis
+[3] Hutto, C.J. & Gilbert, E.E. (2014). VADER: A Parsimonious Rule-based Model for Sentiment Analysis of Social Media Text. Eighth International Conference on Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014. https://github.com/cjhutto/vaderSentiment#vader-sentiment-analysis
 
 [4] https://clojars.org/
 
