@@ -63,70 +63,59 @@
                     (>= (+ (rate-percentage 1) (rate-percentage 2)) 0.6)
                     ["Chill out a bit—take a breather, it's just a game."
                      "Try hyping them up instead of calling them out."
-                     "Focus on the next match instead of tilting over this one."
-                     "Remind them: 'Even Faker has bad days!'"]
+                     "Focus on the next match instead of tilting over this one."]
 
                     ;; Mostly neutral messages (rate 3 dominates)
                     (>= (rate-percentage 3) 0.7)
-                    ["Keep comms clear—let’s not overthink it."
-                     "Break it down: 'What's the play for this map?'"
+                    ["Break it down: 'What's the play for this map?'"
                      "Mid-game? Time for some hype calls!"
                      "After this, maybe brainstorm some new strats."]
 
                     ;; Mostly positive messages (rates 4 and 5 dominate)
                     (>= (+ (rate-percentage 4) (rate-percentage 5)) 0.6)
                     ["GG vibes all around—keep the energy up!"
-                     "Time to try some wild strats while we're on a roll."
                      "Who’s MVP? Let’s keep feeding their plays."
                      "Keep the squad hyped up—'Victory Royale incoming!'"]
 
                     ;; Mixed messages (balanced rates)
                     (every? #(<= (rate-percentage %) 0.4) [1 2 3 4 5])
-                    ["Mood’s all over—try a quick pep talk."
-                     "Find out what's bothering the team and fix it."
+                    ["Mood’s all over—try a quick pep talk. Find out what's bothering the team and fix it."
                      "Mid-game? Suggest small tweaks without overcomplicating."
                      "Post-match, check what's been working or not."]
 
                     ;; High rate of very positive (rate 5 > 40%)
                     (>= (rate-percentage 5) 0.4)
-                    ["Big plays happening—shout ‘em out more!"
-                     "Momentum's good—go for some aggressive moves."
+                    ["Momentum's good—go for some aggressive moves."
                      "Everyone’s vibing—suggest crazy comps or strats."
                      "Positive vibes = ranked grind time!"]
 
                     ;; High rate of very negative (rate 1 > 40%)
                     (>= (rate-percentage 1) 0.4)
-                    ["Squad's tilted—suggest a chill game or quick break."
-                     "Mute toxic comms and focus on your own plays."
-                     "Remind them: 'We're all noobs compared to the pros.'"
-                     "Maybe swap roles or try new characters?"]
+                    ["Mute toxic comms and focus on your own plays."
+                     "Remind them: 'We're all noobs compared to the pros.'"]
 
                     ;; Predominantly slightly negative (rate 2 > 40%)
                     (>= (rate-percentage 2) 0.4)
-                    ["Looks like frustrations creeping in—remind them to focus."
-                     "Ask: 'What’s the play to turn this around?'"
+                    ["Looks like frustrations creeping in—remind them to focus." 
                      "Encourage them to try again—'We're still in this!'"
                      "Bad vibes? Joke it off with some light banter."]
 
                     ;; Predominantly slightly positive (rate 4 > 40%)
                     (>= (rate-percentage 4) 0.4)
-                    ["Squad's in a good spot—suggest a sneaky strat."
-                     "Keep the comms light but focused—no distractions."
-                     "Let’s lock it in and close this match strong!"
-                     "Throw out ideas: 'Who wants to pull off the big play?'"]
+                    ["Squad's in a good spot — suggest a sneaky strat."
+                     "Stay focused — no distractions."
+                     "Let’s lock it in and close this match strong!"]
 
                     ;; Rapid swings (negative and positive alternating)
                     (and (>= (rate-percentage 1) 0.2)
                          (>= (rate-percentage 5) 0.2))
                     ["Team’s mood’s a rollercoaster—help stabilize it."
                      "Keep calls short and clear—minimize confusion."
-                     "Post-game? Suggest a cooldown game or a strat talk."
-                     "Focus on shared goals: ‘Let's all get the dub!’"]
+                     "Post-game? Suggest a cooldown game or a strat talk."]
 
                     ;; Default: Balanced with no clear trend
                     :else
                     ["Call out good plays to keep the squad motivated."
-                     "Don’t overthink—stick to basics and have fun."
-                     "Remind them: 'Win or lose, it’s about the grind!'"
+                     "Don’t overthink—stick to basics and have fun." 
                      "Suggest a debrief after to level up gameplay."])]
       {:tactics tactics})))

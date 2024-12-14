@@ -55,7 +55,7 @@
 
 (defn ws-handler [ring-req]
   (if-not (:websocket? ring-req)
-    {:status 200 :body "Welcome to the chatroom! JS client connecting..."}
+    {:status 200 :body "Welcome to the chatroom! Client connecting..."}
     (ws/as-channel ring-req
                    {:on-open (fn [ch]
                               (swap! clients conj ch))
