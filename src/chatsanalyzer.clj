@@ -119,3 +119,14 @@
                      "Don’t overthink—stick to basics and have fun." 
                      "Suggest a debrief after to level up gameplay."])]
       {:tactics tactics})))
+
+(defn calculate-chat-rate-using-loop [messages]
+  "Calculates the average rate for all messages in the chat using loop/recur."
+  (if (empty? messages)
+    0
+    (let [total (loop [msgs messages
+                       acc 0]
+                  (if (empty? msgs)
+                    acc
+                    (recur (rest msgs) (+ acc (:messageRate (first msgs))))))]
+      (/ total (count messages)))))
