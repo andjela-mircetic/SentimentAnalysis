@@ -34,28 +34,28 @@
           (seesaw/alert "Tactics" "No specific tactics to suggest at the moment.")))
       (seesaw/alert "Error" "No active chat selected.")))
 
-  
 (defn update-chat-panel [chat central-panel]
   "Updates the central panel with chat details."
   (if chat
-    (let [sorted-messages (sort-by :time (:messages chat))
+    (let [sorted-messages (sort-by :time (:messages chat)) 
           message-list (map (fn [{:keys [sentFrom message]}]
                               (seesaw/label :text (str sentFrom ": " message)))
                             sorted-messages)
-          chat-panel (seesaw/vertical-panel :items message-list)
-          chat-rate-label (seesaw/label :text (str "Chat rate: "
+          chat-panel (seesaw/vertical-panel :items message-list) 
+          scrollable-chat-panel (seesaw/scrollable chat-panel) 
+          chat-rate-label (seesaw/label :text (str "<html><b><font color='red'>Chat rate: "
                                                    (if-let [rate (:chatRate chat)]
                                                      (format "%.2f" (double rate))
-                                                     "0.00"))) 
+                                                     "0.00")
+                                                   "</font></b></html>"))
           tactics-button (seesaw/button :text "Tell me some tactics"
                                         :listen [:action
-                                                 (fn [_] (show-tactics))])
-
-          top-panel (seesaw/horizontal-panel :items [chat-rate-label tactics-button])
+                                                 (fn [_] (show-tactics))]) 
+          top-panel (seesaw/horizontal-panel :items [chat-rate-label tactics-button]) 
           message-field (seesaw/text :columns 30 :id :message-field)
           send-button (seesaw/button :text "Send"
                                      :listen [:action
-                                              (fn [e]
+                                              (fn [_]
                                                 (let [msg (seesaw/text message-field)]
                                                   (send-message-via-websocket {:type "message"
                                                                                :sentFrom @logged-in-username
@@ -64,17 +64,18 @@
                                                   (swap! current-chat update :messages conj {:sentFrom @logged-in-username :message msg})
                                                   (seesaw/text! message-field "")
                                                   (update-chat-panel @current-chat central-panel)))])
-
+          
+          bottom-panel (seesaw/horizontal-panel :items [message-field send-button])
           new-content (seesaw/border-panel
                        :north top-panel
-                       :center chat-panel
-                       :south (seesaw/horizontal-panel
-                               :items [message-field send-button]))]
-      (seesaw/config! central-panel :items [new-content]) 
+                       :center scrollable-chat-panel
+                       :south bottom-panel)] 
+      (seesaw/config! central-panel :items [new-content])
       (seesaw/repaint! central-panel))
     (do
-      (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)]) 
+      (seesaw/config! central-panel :items [(seesaw/label :text "Detailed messages will appear here." :foreground :gray)])
       (seesaw/repaint! central-panel))))
+
 
 (defn refresh-chat-list []
   "Refreshes the chat list when no chats are available."
