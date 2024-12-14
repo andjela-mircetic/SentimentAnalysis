@@ -208,5 +208,7 @@
     (seesaw/show! frame)))
 
    (defn -main []
-    "The main entry point of the app."
-    (prompt-for-username))
+     "The main entry point of the app, starts server and then UI." 
+     (future
+       (maincode/start-websocket-server))
+     (prompt-for-username))
