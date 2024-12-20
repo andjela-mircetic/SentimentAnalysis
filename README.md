@@ -6,7 +6,7 @@ Imagine a chat where every user is game lover, where every message holds insight
 GamerChat is a chat application designed specifically for gamers to improve communication and strategy. It integrates analysis the content of messages to help teams understand the tone of their discussions and emotional meaning, and refine tactics in real time. Key thing in this app is *simplicity* - we all know how much gamers are impatient when playing.
 
 ## Video demo of basic usecases and description
-In the video I made an overview of the app and its functionalities.
+In the [video](https://fonbgacrs-my.sharepoint.com/personal/am20243806_student_fon_bg_ac_rs/_layouts/15/stream.aspx?id=%2Fpersonal%2Fam20243806%5Fstudent%5Ffon%5Fbg%5Fac%5Frs%2FDocuments%2FVideo1%2Emov&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2Eef3e50e8%2D5a1a%2D4d77%2Daea4%2D0724a7ac4b13&isDarkMode=false) I made an overview of the app and its functionalities.
 
 When you launch the application, it begins by displaying a prompt that invites you to enter a username. If the username is valid and available, the application establishes a WebSocket connection to enable real-time communication with the server. Simpliciy here is that there is no some special validation, it is checked if the username already exists, and if it doesn't - its being created. Only condition is that it's not empty.
 
