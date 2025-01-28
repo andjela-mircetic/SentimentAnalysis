@@ -42,6 +42,24 @@ Midje library was used for unit testing. Parts of the code that represent bussin
 ## Benchmarking
 Inspired by the benchmarking we did on classes, I wanted to compare two implementatons of the function that calculates chat rate, wanting to see which approach is better. Based on the benchmarking results, both implementations of `calculate-chat-rate` (using `reduce`/`map` and `loop/recur`) turned out to perform very similarly. However, the `reduce`/`map` version demonstrated slightly more stability in execution time, with fewer outliers and a smaller standard deviation, so it was used in this app.
 
+## Integration of Python with Clojure: Shell Script vs. libpython.clj
+When using Python within a Clojure application, there are two main approaches: calling Python scripts via shell commands or embedding Python with libpython.clj. In this project, first approach was used due to technical constraints. 
+
+With shell script execution, each call to a Python script creates a new OS-level process. This includes initializing the Python interpreter, loading required libraries, and executing the script. Shell-based calls are resource-intensive due to the overhead of creating and managing new processes. Frequent calls may lead to higher CPU and memory usage, potentially affecting system performance. Each Python process is isolated, minimizing the risk of conflicts between users or different script environments. On the other hand, when using libpython.clj, Python code runs within the same JVM process using libpython.clj. No separate OS process is created, reducing initialization overhead. This approach is more resource-efficient, as the Python interpreter is initialized once and shared across calls. It is suitable for frequent Python function calls. But, all Python code runs in the same JVM process, which may lead to resource conflicts or dependency issues in multi-user scenarios. 
+
+Errors in the Python script result in a non-zero exit code. These can be captured in Clojure by checking the process status or parsing the standard error (stderr). With libpython.clj
+Python exceptions are mapped to Java exceptions, allowing direct error handling in Clojure. Errors in Python code could impact the JVM process if not handled properly, as both share the same process. 
+
+Since Python script runs as an external process, it can be controlled or monitored using OS-level tools. Timeouts and resource limits can be applied using tools like ulimit or timeout.
+Misbehaving Python processes can be terminated using their Process ID (PID) with commands like kill, or programmatically through Clojure. On the other hand, using libpython.clj Python code runs within the JVM, so it cannot be managed using OS-level process control tools. Resource usage must be monitored and controlled programmatically. There is no straightforward way to terminate Python code independently of the JVM process. If a Python function misbehaves (e.g., infinite loops), it may require terminating the entire JVM process. 
+
+Conclusion is that both approaches have trade-offs, and that it depends on needs of the app which one should be chosen.
+
+Sources: 
+https://clj-python.github.io/libpython-clj/index.html
+https://clojure.github.io/clojure/clojure.java.shell-api.html
+https://realpython.com/python-subprocess/
+
 ## Conclusion
 The goal of this project was to explore Clojure programming in the context of building a functional, real-time chat application with added value through sentiment analysis and tactical feedback for gamers. Throughout the process, I focused on integrating various libraries, such as Seesaw for the UI, Midje for testing, Criterium for benchmarking, to enhance the functionality of the chat app and to get better understanding of performance and decision making in software development. 
 
@@ -69,3 +87,5 @@ This project has not only strengthened my understanding of Clojure but also expa
 [9] https://docs.python.org/3/library/sys.html
 
 [10] https://github.com/michaelklishin/monger
+
+[11] https://realpython.com/python-subprocess/
