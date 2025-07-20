@@ -9,7 +9,8 @@
                  [seesaw "1.5.0"] 
                  [http-kit "2.9.0-alpha1"] 
                  [cheshire "5.10.0"]
-                 [stylefruits/gniazdo "1.2.2"] ] 
+                 [stylefruits/gniazdo "1.2.2"]
+                 [clj-python/libpython-clj "2.026" :exclusions [org.clojure/clojure org.checkerframework/checker-qual]]] 
   :plugins [[cider/cider-nrepl "0.47.1"] 
             [lein-midje "3.2.1"]] 
   :main ui)

@@ -1,31 +1,29 @@
 (ns chatsanalyzer
   (:require [nrepl.server :as nrepl-server]
             [cider.nrepl :refer (cider-nrepl-handler)]
-            [clojure.string :as str] 
+            [clojure.string :as str]
             [clojure.java.shell :as shell]
             [db.core :as db]
             [clojure.java.io :as io]
-            ))
+            [libpython-clj2.require :refer [require-python]]
+            [libpython-clj2.python :as py]))
 
+(py/initialize!)
+(require-python '[vaderSentiment.vaderSentiment])
+(def vader-module (py/import-module "vaderSentiment.vaderSentiment"))
+(def analyzer (py/call-attr vader-module "SentimentIntensityAnalyzer"))
 
 ;This namespace is responsible for analyzing tactics and sentiment of messages
 
 (defn calculate-message-rate [text]
-  "Calculates the sentiment rate for a given message."
-  (let [python-script (str (io/file "src/vader_sentiment.py"))
-        result (shell/sh "python3" python-script text)]
-    (if (= 0 (:exit result))
-      (let [compound-score (Double/parseDouble (clojure.string/trim (:out result)))
-            sentiment-score (cond
-                              (<= compound-score -0.6) 1
-                              (<= compound-score -0.2) 2
-                              (<= compound-score 0.2) 3
-                              (<= compound-score 0.6) 4
-                              :else 5)]
-        sentiment-score)
-      (do
-        (println "Error: " (:err result))
-        nil))))
+  (let [sentiment (py/call-attr analyzer "polarity_scores" text)
+        compound-score (py/get-item sentiment "compound")]
+    (cond
+      (<= compound-score -0.6) 1
+      (<= compound-score -0.2) 2
+      (<= compound-score 0.2) 3
+      (<= compound-score 0.6) 4
+      :else 5)))
 
 (defn calculate-chat-rate [messages]
   "Calculates the average rate for all messages in the chat."
@@ -40,7 +38,7 @@
         chat (db/find-one-as-map "chats" {:_id chat-id})
         all-messages (:messages chat)
         updated-messages (conj all-messages {:message message :messageRate rate})
-        avg-rate (calculate-chat-rate updated-messages)] 
+        avg-rate (calculate-chat-rate updated-messages)]
     (db/update "chats"
                {:_id chat-id}
                {"$set" {:chatRate avg-rate}})
